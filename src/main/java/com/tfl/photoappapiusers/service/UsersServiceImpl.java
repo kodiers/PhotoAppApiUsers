@@ -1,11 +1,15 @@
 package com.tfl.photoappapiusers.service;
 
+import com.tfl.photoappapiusers.data.AlbumsServiceClient;
 import com.tfl.photoappapiusers.data.UserEntity;
 import com.tfl.photoappapiusers.data.UsersRepository;
 import com.tfl.photoappapiusers.shared.UserDto;
 import com.tfl.photoappapiusers.ui.model.AlbumResponseModel;
+import feign.FeignException;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
@@ -17,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,14 +30,18 @@ public class UsersServiceImpl implements UsersService {
 
     private final UsersRepository usersRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final RestTemplate restTemplate;
+//    private final RestTemplate restTemplate;
     private final Environment environment;
+    private final AlbumsServiceClient albumsServiceClient;
+
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public UsersServiceImpl(UsersRepository usersRepository, BCryptPasswordEncoder passwordEncoder,
-                            RestTemplate restTemplate, Environment environment) {
+                            Environment environment, AlbumsServiceClient albumsServiceClient) {
         this.usersRepository = usersRepository;
         this.passwordEncoder = passwordEncoder;
-        this.restTemplate = restTemplate;
+        this.albumsServiceClient = albumsServiceClient;
+//        this.restTemplate = restTemplate;
         this.environment = environment;
     }
 
@@ -75,10 +84,12 @@ public class UsersServiceImpl implements UsersService {
             throw new UsernameNotFoundException("User not found");
         }
         UserDto userDto = new ModelMapper().map(userEntity, UserDto.class);
-        String albumsUrl = String.format(environment.getProperty("albums.url"), userId);
-        ResponseEntity<List<AlbumResponseModel>> albumsListResponse = restTemplate.exchange(albumsUrl, HttpMethod.GET,
-                null, new ParameterizedTypeReference<List<AlbumResponseModel>>() {});
-        List<AlbumResponseModel> albumsList = albumsListResponse.getBody();
+//        String albumsUrl = String.format(environment.getProperty("albums.url"), userId);
+//        ResponseEntity<List<AlbumResponseModel>> albumsListResponse = restTemplate.exchange(albumsUrl, HttpMethod.GET,
+//                null, new ParameterizedTypeReference<List<AlbumResponseModel>>() {});
+//        List<AlbumResponseModel> albumsList = albumsListResponse.getBody();
+        List<AlbumResponseModel> albumsList = albumsServiceClient.getAlbums(userId);
+
         userDto.setAlbums(albumsList);
         return userDto;
     }
