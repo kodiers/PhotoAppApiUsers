@@ -33,3 +33,4 @@ build/
 .vscode/
 
 mysqldata
+users-ws.log
